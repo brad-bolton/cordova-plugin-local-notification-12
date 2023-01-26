@@ -119,7 +119,11 @@ public class MatchTrigger extends IntervalTrigger {
         if (matchers.get(4) != null) {
             cal.set(Calendar.YEAR, matchers.get(4));
         }
-
+        if (matchers.get(5) != null) {
+            cal.set(Calendar.SECOND, matchers.get(5));
+        } else {
+            cal.set(Calendar.SECOND, 0);
+        }
         return cal;
     }
 
