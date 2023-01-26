@@ -234,7 +234,8 @@ public final class Request {
                 (Integer) every.opt("hour"),
                 (Integer) every.opt("day"),
                 (Integer) every.opt("month"),
-                (Integer) every.opt("year")
+                (Integer) every.opt("year"),
+                (Integer) every.opt("second") // Added second
         );
     }
 
