@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import javax.management.Notification;
+
 import de.appplant.cordova.plugin.badge.BadgeImpl;
 
 import static android.os.Build.VERSION.SDK_INT;
@@ -78,10 +80,12 @@ public final class Manager {
         return new Manager(context);
     }
 
-    /**
+ /**
      * Check if app has local notification permission.
+     * Ask if user has enabled permission for local notifications.
      */
-    public boolean hasPermission() {
+
+    private boolean areNotificationsEnabled () {
         return getNotCompMgr().areNotificationsEnabled();
     }
 

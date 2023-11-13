@@ -40,6 +40,9 @@ import android.os.PowerManager;
 import android.provider.Settings;
 import android.util.Pair;
 import android.view.View;
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.util.Log;
 // Notification permission
 
 import android.app.NotificationManager;
@@ -68,6 +71,7 @@ import de.appplant.cordova.plugin.notification.Notification;
 import de.appplant.cordova.plugin.notification.Options;
 import de.appplant.cordova.plugin.notification.Request;
 import de.appplant.cordova.plugin.notification.action.ActionGroup;
+import de.appplant.cordova.plugin.notification.util.CallbackContextUtil;
 
 import static android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS;
 import static android.content.Context.POWER_SERVICE;
@@ -75,6 +79,7 @@ import static android.os.Build.VERSION.SDK_INT;
 import static android.os.Build.VERSION_CODES.M;
 import static de.appplant.cordova.plugin.notification.Notification.Type.SCHEDULED;
 import static de.appplant.cordova.plugin.notification.Notification.Type.TRIGGERED;
+
 
 // import com.getcapacitor.CapacitorWebView;
 
@@ -86,6 +91,8 @@ import static de.appplant.cordova.plugin.notification.Notification.Type.TRIGGERE
  */
 @SuppressWarnings({ "Convert2Diamond", "Convert2Lambda" })
 public class LocalNotification extends CordovaPlugin {
+
+    public static final String TAG = "LocalNotification";
 
     // Reference to the web view for static access
     private static WeakReference<CordovaWebView> webView = null;
@@ -413,7 +420,7 @@ public class LocalNotification extends CordovaPlugin {
      * @param command The callback context used when calling back into JavaScript.
      */
     private void check(CallbackContext command) {
-        boolean allowed = getNotMgr().hasPermission();
+       boolean allowed = getNotMgr().areNotificationsEnabled();
         success(command, allowed);
     }
 
@@ -422,8 +429,24 @@ public class LocalNotification extends CordovaPlugin {
      *
      * @param command The callback context used when calling back into JavaScript.
      */
-    private void request(CallbackContext command) {
-        check(command);
+    private void request (CallbackContext command) {
+        if (getNotMgr().areNotificationsEnabled()) {
+            success(command, true);
+
+            return;
+        }
+
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.TIRAMISU) {
+            // Notifications are disabled and POST_NOTIFICATIONS runtime permission is not supported.
+            success(command, false);
+
+            return;
+        }
+
+        // Request the runtime permission.
+        int requestId = CallbackContextUtil.storeContext(command);
+
+        cordova.requestPermissions(this, requestId, new String[]{Manifest.permission.POST_NOTIFICATIONS});
     }
 
     /**
@@ -852,7 +875,18 @@ public class LocalNotification extends CordovaPlugin {
     private Manager getNotMgr() {
         return Manager.getInstance(cordova.getActivity());
     }
+    
+    public void onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
+        try {
+            CallbackContext context = CallbackContextUtil.getContext(requestCode);
+            CallbackContextUtil.clearContext(requestCode);
 
+            success(context, grantResults[0] == PackageManager.PERMISSION_GRANTED);
+        } catch (Exception e) {
+            String error = "Exception occurred onRequestPermissionsResult: ".concat(e.getMessage());
+            Log.e(TAG, error);
+        }
+    }
 }
 
 // codebeat:enable[TOO_MANY_FUNCTIONS]
