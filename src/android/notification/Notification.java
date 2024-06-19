@@ -306,7 +306,12 @@ public final class Notification {
 
         for (String action : actions) {
             Intent intent = new Intent(context, TriggerReceiver.class).setAction(action).putExtra(Notification.EXTRA_ID, options.getId());
-            PendingIntent pi = LaunchUtils.getBroadcastPendingIntent(context, intent);
+            PendingIntent pi;
+            if (Build.VERSION.SDK_INT >= 34) {
+                pi= PendingIntent.getBroadcast(context, 0,intent,PendingIntent.FLAG_MUTABLE | PendingIntent.FLAG_ALLOW_UNSAFE_IMPLICIT_INTENT);
+            } else {
+                pi= LaunchUtils.getBroadcastPendingIntent(context, intent);
+            }
             if (pi != null) {
                 getAlarmMgr().cancel(pi);
             }
