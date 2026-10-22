@@ -309,7 +309,7 @@ public class MatchTrigger extends IntervalTrigger {
                 return false;
         }
 
-        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.SECOND, 59);
         cal.set(DAY_OF_WEEK, specials.get(0));
 
         if (matchers.get(3) != null && cal.get(Calendar.MONTH) != month)
@@ -318,7 +318,12 @@ public class MatchTrigger extends IntervalTrigger {
         //noinspection RedundantIfStatement
         if (matchers.get(4) != null && cal.get(Calendar.YEAR) != year)
             return false;
-
+        
+        Calendar rightNow = Calendar.getInstance();
+        if (cal.before(rightNow))
+        {
+            cal.add(WEEK_OF_MONTH, 1);
+        }
         return true;
     }
 
