@@ -213,7 +213,8 @@ public final class Notification {
             last.putExtra(Request.EXTRA_LAST, true);
         }
 
-        for (Pair<Date, Intent> pair : intents) {
+        for (Pair<Date, Intent> pair : intents) 
+        {
             Date date     = pair.first;
             long time     = date.getTime();
             Intent intent = pair.second;
@@ -222,7 +223,6 @@ public final class Notification {
                 continue;
 
             PendingIntent pi = LaunchUtils.getBroadcastPendingIntent(context, intent);
-
             try {
                 switch (options.getPrio()) {
                     case PRIORITY_MIN:
@@ -237,13 +237,37 @@ public final class Notification {
                         }
                         break;
                     default:
-                        mgr.setExact(RTC_WAKEUP, time, pi);
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !mgr.canScheduleExactAlarms()) {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                mgr.setAndAllowWhileIdle(AlarmManager.RTC, time, pi);
+                            } else {
+                                mgr.set(AlarmManager.RTC, time, pi);
+                            }
+                        } else {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                try {
+                                    mgr.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, time, pi);
+                                }catch (Exception e)
+                                {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                try {
+                                    mgr.setExact(AlarmManager.RTC, time, pi);
+                                }catch (Exception e)
+                                {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
                         break;
-                }
-            } catch (Exception ignore) {
-                // Samsung devices have a known bug where a 500 alarms limit
-                // can crash the app
-            }
+                    }
+                } catch (Exception ignore)
+                    {
+                        ignore.printStackTrace();
+                        // Samsung devices have a known bug where a 500 alarms limit
+                        // can crash the app
+                    }
         }
     }
 
